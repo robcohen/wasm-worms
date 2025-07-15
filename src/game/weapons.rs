@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::game::physics::{RigidBody, Collider};
-use crate::game::terrain::TerrainMap;
+
 use crate::game::worm::Worm;
 
 pub struct WeaponPlugin;

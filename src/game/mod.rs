@@ -35,12 +35,13 @@ impl Plugin for GamePlugin {
 }
 
 fn setup_camera(mut commands: Commands) {
+    let mut camera = Camera2d;
+    let mut projection = OrthographicProjection::default_2d();
+    projection.scale = 0.5; // Start zoomed out to see more terrain
+    
     commands.spawn((
-        Camera2d,
+        camera,
         Transform::from_translation(Vec3::new(0.0, 200.0, 0.0)),
-        Projection::Orthographic(OrthographicProjection {
-            scale: 0.5, // Start zoomed out to see more terrain
-            ..default()
-        }),
+        Projection::Orthographic(projection),
     ));
 }
