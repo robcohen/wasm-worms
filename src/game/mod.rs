@@ -7,6 +7,9 @@ pub mod game_state;
 pub mod camera;
 pub mod weapons;
 pub mod aiming;
+pub mod ui;
+pub mod particles;
+pub mod ai;
 
 use physics::PhysicsPlugin;
 use terrain::TerrainPlugin;
@@ -15,6 +18,9 @@ use game_state::GameStatePlugin;
 use camera::CameraPlugin;
 use weapons::WeaponPlugin;
 use aiming::AimingPlugin;
+use ui::UIPlugin;
+use particles::ParticlePlugin;
+use ai::AIPlugin;
 
 pub struct GamePlugin;
 
@@ -29,6 +35,9 @@ impl Plugin for GamePlugin {
                 CameraPlugin,
                 WeaponPlugin,
                 AimingPlugin,
+                UIPlugin,
+                ParticlePlugin,
+                AIPlugin,
             ))
             .add_systems(Startup, setup_camera);
     }

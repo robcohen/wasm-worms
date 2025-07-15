@@ -14,6 +14,7 @@ impl Plugin for AimingPlugin {
                 update_trajectory_preview,
                 handle_weapon_switching,
                 handle_firing,
+                cleanup_trajectory_preview,
             ));
     }
 }
@@ -26,20 +27,46 @@ pub struct AimingState {
     pub max_power: f32,
     pub power_charging: bool,
     pub trajectory_points: Vec<Vec2>,
+    pub last_calculated_angle: f32,
+    pub last_calculated_power: f32,
 }
 
 impl Default for AimingState {
     fn default() -> Self {
         Self {
             is_aiming: false,
-            aim_angle: 0.0,
+            aim_angle: 45.0,
             power: 0.5,
             max_power: 1.0,
             power_charging: false,
             trajectory_points: Vec::new(),
+            last_calculated_angle: 0.0,
+            last_calculated_power: 0.0,
+        }
         }
     }
 }
+
+fn cleanup_trajectory_preview(
+    mut commands: Commands,
+    aiming_state: Res<AimingState>,
+    preview_query: Query<Entity, With<TrajectoryPreview>>,
+    crosshair_query: Query<Entity, With<AimingCrosshair>>,
+    power_bar_query: Query<Entity, With<PowerBar>>,
+) {
+    if !aiming_state.is_aiming {
+        // Clean up all aiming-related entities when not aiming
+        for entity in preview_query.iter() {
+            commands.entity(entity).despawn();
+        }
+        for entity in crosshair_query.iter() {
+            commands.entity(entity).despawn();
+        }
+        for entity in power_bar_query.iter() {
+            commands.entity(entity).despawn();
+        }
+    }
+}}
 
 #[derive(Component)]
 pub struct TrajectoryPreview;
@@ -232,27 +259,32 @@ fn update_trajectory_preview(
     let angle_rad = aiming_state.aim_angle.to_radians();
     let direction = Vec2::new(angle_rad.cos(), angle_rad.sin());
     
-    // Calculate trajectory points
+    // Only recalculate trajectory if angle or power changed significantly
+    let current_weapon = weapon_inventory.weapons.get(weapon_inventory.current_weapon).unwrap();
+    let angle_rad = aiming_state.aim_angle.to_radians();
+    let direction = Vec2::new(angle_rad.cos(), angle_rad.sin());
+    let weapon_stats = current_weapon.get_stats();
+    let initial_velocity = direction * aiming_state.power * weapon_stats.projectile_speed;
+    
     let mut trajectory_points = Vec::new();
-    let initial_velocity = direction * weapon_stats.projectile_speed * aiming_state.power;
-    let gravity = Vec2::new(0.0, -980.0) * weapon_stats.gravity_scale;
-    let dt = 0.1; // Time step for simulation
+    let mut pos = worm_transform.translation.truncate();
+    let mut velocity = initial_velocity;
     
-    let mut pos = Vec2::new(worm_transform.translation.x, worm_transform.translation.y);
-    let mut vel = initial_velocity;
-    
-    for _ in 0..100 { // Max trajectory points
+    // Simulate trajectory with proper physics
+    let dt = 0.02; // 50 FPS simulation
+    for _ in 0..200 {
         trajectory_points.push(pos);
         
-        // Apply physics
-        vel += gravity * dt;
-        vel += wind.force * weapon_stats.wind_resistance * dt;
-        pos += vel * dt;
+        // Apply physics (matching the actual projectile physics)
+        velocity.y += -980.0 * weapon_stats.gravity_scale * dt; // Gravity
+        velocity += wind.force * weapon_stats.wind_resistance * dt; // Wind effect
+        pos += velocity * dt;
         
-        // Stop if trajectory goes too far down
-        if pos.y < worm_transform.translation.y - 500.0 {
+        // Stop if we hit the ground or go too far
+        if pos.y < -400.0 || pos.x.abs() > 2000.0 {
             break;
         }
+    }
     }
     
     // Spawn trajectory preview dots

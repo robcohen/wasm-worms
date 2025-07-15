@@ -89,7 +89,7 @@ fn spawn_worms(
         },
         RigidBody::default(),
         Collider::default(),
-        PlayerControlled, // Both worms can be controlled by players
+        crate::game::ai::AIControlled, // Make enemy worm AI-controlled
     ));
 }
 

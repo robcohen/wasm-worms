@@ -11,11 +11,12 @@ impl Plugin for WeaponPlugin {
             .insert_resource(WeaponInventory::default())
             .insert_resource(WindSystem::new())
             .add_systems(Update, (
-                projectile_movement,
+                update_wind_system,
+                apply_wind_to_projectiles,
                 projectile_collision,
                 explosion_system,
                 cleanup_expired_projectiles,
-                update_wind,
+                change_wind_on_turn_end,
             ));
     }
 }
@@ -54,18 +55,17 @@ impl WindSystem {
     }
     
     pub fn generate_new_wind(&mut self) {
-        use std::f32::consts::PI;
-        let angle = fastrand::f32() * 2.0 * PI;
-        let strength = fastrand::f32() * 100.0; // Max wind force
-        self.force = Vec2::new(angle.cos() * strength, 0.0); // Only horizontal wind
+        let strength = (fastrand::f32() - 0.5) * 120.0; // -60 to +60 wind force
+        self.force = Vec2::new(strength, 0.0); // Only horizontal wind
+        println!("New wind: {:.1}", strength); // Debug output
     }
 }
 
 #[derive(Clone, Debug)]
 pub enum WeaponType {
-    Bazooka,
     Grenade,
-    Shotgun,
+    Bazooka,
+    ClusterBomb,
 }
 
 impl WeaponType {
@@ -89,23 +89,23 @@ impl WeaponType {
                 fuse_time: Some(3.0),
                 projectile_count: 1,
             },
-            WeaponType::Shotgun => WeaponStats {
-                damage: 25.0,
-                explosion_radius: 30.0,
-                projectile_speed: 800.0,
-                gravity_scale: 0.8,
-                wind_resistance: 0.3,
-                fuse_time: None,
-                projectile_count: 5,
+            WeaponType::ClusterBomb => WeaponStats {
+                damage: 35.0,
+                explosion_radius: 60.0,
+                projectile_speed: 350.0,
+                gravity_scale: 1.0,
+                wind_resistance: 0.7,
+                fuse_time: Some(2.5),
+                projectile_count: 3, // Splits into 3 smaller bombs
             },
         }
     }
     
     pub fn get_color(&self) -> Color {
         match self {
-            WeaponType::Bazooka => Color::srgb(1.0, 0.5, 0.0),
             WeaponType::Grenade => Color::srgb(0.2, 0.8, 0.2),
-            WeaponType::Shotgun => Color::srgb(0.8, 0.8, 0.2),
+            WeaponType::Bazooka => Color::srgb(1.0, 0.5, 0.0),
+            WeaponType::ClusterBomb => Color::srgb(0.8, 0.2, 0.8),
         }
     }
 }
@@ -279,6 +279,24 @@ fn explode_projectile(
     // Update game state
     game_state.explosion_started();
     
+    // Spawn explosion particles
+    crate::game::particles::spawn_explosion_particles(
+        commands,
+        meshes,
+        materials,
+        position,
+        (projectile.explosion_radius / 5.0) as usize, // Scale particle count with explosion size
+    );
+    
+    // Spawn dirt particles
+    crate::game::particles::spawn_dirt_particles(
+        commands,
+        meshes,
+        materials,
+        position,
+        (projectile.explosion_radius / 8.0) as usize,
+    );
+    
     // Create explosion effect
     commands.spawn((
         Mesh2d(meshes.add(bevy::math::primitives::Circle::new(projectile.explosion_radius))),
@@ -328,10 +346,25 @@ fn cleanup_expired_projectiles(
     query: Query<(Entity, &Transform), With<Projectile>>,
 ) {
     for (entity, transform) in query.iter() {
-        // Remove projectiles that fall too far down
-        if transform.translation.y < -1000.0 {
+        // Remove projectiles that have gone too far off screen
+        if transform.translation.y < -1000.0 || transform.translation.x.abs() > 2000.0 {
             commands.entity(entity).despawn();
         }
+    }
+}
+
+fn change_wind_on_turn_end(
+    mut wind_system: ResMut<WindSystem>,
+    game_state: Res<crate::game::game_state::GameState>,
+) {
+    // Change wind when turn transitions happen
+    if game_state.game_phase == crate::game::game_state::GamePhase::TurnTransition {
+        // Only change wind occasionally (30% chance)
+        if fastrand::f32() < 0.3 {
+            wind_system.generate_new_wind();
+        }
+    }
+}
     }
 }
 

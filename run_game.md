@@ -1,4 +1,4 @@
-# How to Run WASM Worms
+L# How to Run WASM Worms
 
 ## Current Status
 The game code is complete with all Phase 3 features, but there's a WASM compilation issue with the `getrandom` dependency that needs to be resolved for web deployment.

@@ -13,6 +13,8 @@ impl Plugin for GameStatePlugin {
                 handle_turn_end,
                 handle_turn_transition,
                 update_active_player_indicator,
+                check_win_conditions,
+                handle_game_over,
             ));
     }
 }
@@ -214,6 +216,97 @@ fn handle_turn_transition(
                 game_state.start_new_turn();
                 timer.reset();
             }
+        }
+    }
+}
+
+fn check_win_conditions(
+    mut game_state: ResMut<GameState>,
+    worm_query: Query<&Worm>,
+) {
+    if game_state.game_phase == GamePhase::GameOver {
+        return;
+    }
+    
+    // Count alive worms per team
+    let mut team_counts = vec![0u32; game_state.teams.len()];
+    
+    for worm in worm_query.iter() {
+        if worm.health > 0.0 {
+            team_counts[worm.team as usize] += 1;
+        }
+    }
+    
+    // Update team alive counts
+    for (i, team) in game_state.teams.iter_mut().enumerate() {
+        team.worms_alive = team_counts[i];
+    }
+    
+    // Check for winner
+    let alive_teams: Vec<_> = team_counts.iter().enumerate()
+        .filter(|(_, &count)| count > 0)
+        .collect();
+        
+    if alive_teams.len() <= 1 {
+        if let Some((team_id, _)) = alive_teams.first() {
+            game_state.winner = Some(*team_id as u32);
+        }
+        game_state.game_phase = GamePhase::GameOver;
+    }
+}
+
+fn handle_game_over(
+    mut commands: Commands,
+    game_state: Res<GameState>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    game_over_query: Query<Entity, With<crate::game::ui::GameOverUI>>,
+) {
+    if game_state.game_phase == GamePhase::GameOver {
+        // Spawn game over UI if not already present
+        if game_over_query.is_empty() {
+            let winner_text = if let Some(winner) = game_state.winner {
+                format!("Player {} Wins!", winner + 1)
+            } else {
+                "Draw!".to_string()
+            };
+            
+            commands.spawn((
+                Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    background_color: Color::srgba(0.0, 0.0, 0.0, 0.8).into(),
+                    position_type: PositionType::Absolute,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    flex_direction: FlexDirection::Column,
+                    ..default()
+                },
+                crate::game::ui::GameOverUI,
+            )).with_children(|parent| {
+                parent.spawn((
+                    Text::new(winner_text),
+                    TextFont {
+                        font_size: 48.0,
+                        ..default()
+                    },
+                    TextColor(Color::YELLOW),
+                ));
+                
+                parent.spawn((
+                    Text::new("Press R to Restart"),
+                    TextFont {
+                        font_size: 24.0,
+                        ..default()
+                    },
+                    TextColor(Color::WHITE),
+                ));
+            });
+        }
+        
+        // Handle restart
+        if keyboard_input.just_pressed(KeyCode::KeyR) {
+            // Reset game state (we'll implement proper restart later)
+            println!("Restart requested - reload the page for now");
         }
     }
 }
