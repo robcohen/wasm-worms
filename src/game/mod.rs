@@ -35,7 +35,7 @@ impl Plugin for GamePlugin {
 }
 
 fn setup_camera(mut commands: Commands) {
-    let mut camera = Camera2d;
+    let camera = Camera2d;
     let mut projection = OrthographicProjection::default_2d();
     projection.scale = 0.5; // Start zoomed out to see more terrain
     

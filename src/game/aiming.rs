@@ -66,19 +66,13 @@ fn handle_aiming_input(
         if !aiming_state.is_aiming {
             aiming_state.is_aiming = true;
             game_state.start_aiming();
+            println!("Entered aiming mode"); // Debug output
         } else {
             aiming_state.is_aiming = false;
             aiming_state.power = 0.0;
             aiming_state.power_charging = false;
             game_state.start_new_turn(); // Return to turn mode
-        }
-    }
-    
-    // Toggle aiming mode
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        aiming_state.is_aiming = !aiming_state.is_aiming;
-        if !aiming_state.is_aiming {
-            aiming_state.power_charging = false;
+            println!("Exited aiming mode"); // Debug output
         }
     }
     
