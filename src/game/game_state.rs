@@ -100,7 +100,6 @@ impl GameState {
     pub fn start_new_turn(&mut self) {
         self.game_phase = GamePhase::PlayerTurn;
     }
-    }
     
     pub fn next_turn(&mut self) {
         self.current_player = (self.current_player + 1) % self.teams.len() as u32;
