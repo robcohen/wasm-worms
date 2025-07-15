@@ -1,0 +1,22 @@
+[package]
+name = "wasm-worms"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = "0.16.1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+web-sys = "0.3"
+console_error_panic_hook = "0.1"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "wasm-worms"
+path = "src/main.rs"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false

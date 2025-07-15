@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WASM Worms</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        
+        #bevy {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        
+        #loading {
+            color: white;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bevy"></canvas>
+    <div id="loading">Loading WASM Worms...</div>
+    
+    <script type="module">
+        import init from './pkg/wasm_worms.js';
+        
+        async function run() {
+            const loadingDiv = document.getElementById('loading');
+            
+            try {
+                await init();
+                loadingDiv.style.display = 'none';
+            } catch (error) {
+                console.error('Failed to load WASM:', error);
+                loadingDiv.innerHTML = 'Failed to load game. Please refresh.';
+            }
+        }
+        
+        run();
+    </script>
+</body>
+</html>
