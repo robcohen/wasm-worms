@@ -11,6 +11,7 @@ impl Plugin for GameStatePlugin {
             .add_systems(Update, (
                 update_turn_timer,
                 handle_turn_end,
+                handle_turn_transition,
                 update_active_player_indicator,
             ));
     }
@@ -55,19 +56,50 @@ impl GameState {
             current_player: 0,
             game_phase: GamePhase::PlayerTurn,
             teams: vec![
-                Team {
-                    id: 0,
-                    color: Color::srgb(0.2, 0.8, 0.2),
-                    worms_alive: 1,
-                },
-                Team {
-                    id: 1,
-                    color: Color::srgb(0.8, 0.2, 0.2),
-                    worms_alive: 1,
-                },
+                Team { id: 0, color: Color::srgb(0.2, 0.8, 0.2), worms_alive: 1 },
+                Team { id: 1, color: Color::srgb(0.8, 0.2, 0.2), worms_alive: 1 },
             ],
             winner: None,
         }
+    }
+    
+    pub fn can_player_act(&self) -> bool {
+        matches!(self.game_phase, GamePhase::PlayerTurn | GamePhase::Aiming)
+    }
+    
+    pub fn start_aiming(&mut self) {
+        if self.game_phase == GamePhase::PlayerTurn {
+            self.game_phase = GamePhase::Aiming;
+        }
+    }
+    
+    pub fn start_firing(&mut self) {
+        if self.game_phase == GamePhase::Aiming {
+            self.game_phase = GamePhase::Firing;
+        }
+    }
+    
+    pub fn projectile_launched(&mut self) {
+        if self.game_phase == GamePhase::Firing {
+            self.game_phase = GamePhase::ProjectileFlying;
+        }
+    }
+    
+    pub fn explosion_started(&mut self) {
+        if self.game_phase == GamePhase::ProjectileFlying {
+            self.game_phase = GamePhase::Explosion;
+        }
+    }
+    
+    pub fn end_turn(&mut self) {
+        self.game_phase = GamePhase::TurnTransition;
+        self.current_player = (self.current_player + 1) % self.teams.len() as u32;
+        // After a brief transition, return to PlayerTurn
+    }
+    
+    pub fn start_new_turn(&mut self) {
+        self.game_phase = GamePhase::PlayerTurn;
+    }
     }
     
     pub fn next_turn(&mut self) {
@@ -164,6 +196,25 @@ fn handle_turn_end(
         if game_state.winner.is_none() {
             game_state.next_turn();
             timer.reset();
+        }
+    }
+}
+
+fn handle_turn_transition(
+    mut game_state: ResMut<GameState>,
+    mut timer: ResMut<TurnTimer>,
+    time: Res<Time>,
+) {
+    if game_state.game_phase == GamePhase::TurnTransition {
+        // Brief pause between turns
+        static mut TRANSITION_TIME: f32 = 0.0;
+        unsafe {
+            TRANSITION_TIME += time.delta_secs();
+            if TRANSITION_TIME >= 1.0 {
+                TRANSITION_TIME = 0.0;
+                game_state.start_new_turn();
+                timer.reset();
+            }
         }
     }
 }

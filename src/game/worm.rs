@@ -52,12 +52,20 @@ fn spawn_worms(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    terrain: Res<crate::game::terrain::TerrainMap>,
 ) {
-    // Spawn player worm
+    // Calculate spawn positions based on terrain size
+    let terrain_width = terrain.width as f32;
+    let terrain_height = terrain.height as f32;
+    
+    // Spawn player worm on left side
+    let player_x = -terrain_width * 0.3;
+    let player_y = terrain_height * 0.3;
+    
     commands.spawn((
         Mesh2d(meshes.add(bevy::math::primitives::Circle::new(16.0))),
         MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(0.2, 0.8, 0.2)))),
-        Transform::from_translation(Vec3::new(-200.0, 100.0, 1.0)),
+        Transform::from_translation(Vec3::new(player_x, player_y, 1.0)),
         Worm {
             team: 0,
             ..default()
@@ -67,11 +75,14 @@ fn spawn_worms(
         PlayerControlled,
     ));
     
-    // Spawn enemy worm
+    // Spawn enemy worm on right side
+    let enemy_x = terrain_width * 0.3;
+    let enemy_y = terrain_height * 0.3;
+    
     commands.spawn((
         Mesh2d(meshes.add(bevy::math::primitives::Circle::new(16.0))),
         MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(0.8, 0.2, 0.2)))),
-        Transform::from_translation(Vec3::new(200.0, 100.0, 1.0)),
+        Transform::from_translation(Vec3::new(enemy_x, enemy_y, 1.0)),
         Worm {
             team: 1,
             ..default()
@@ -83,21 +94,25 @@ fn spawn_worms(
 
 fn worm_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    game_state: Res<crate::game::game_state::GameState>,
     mut query: Query<(&mut RigidBody, &Worm, &Collider), (With<PlayerControlled>, Without<DeadWorm>)>,
 ) {
+    // Only allow movement during player's turn
+    if !game_state.can_player_act() {
+        return;
+    }
+    
     for (mut body, worm, collider) in query.iter_mut() {
-        if worm.health <= 0.0 {
+        if worm.health <= 0.0 || worm.team != game_state.current_player {
             continue;
         }
         
         let mut movement = 0.0;
         
-        // Only allow movement when not in aiming mode
-        // We'll check this in the aiming system instead
-        if keyboard_input.pressed(KeyCode::KeyA) {
+        if keyboard_input.pressed(KeyCode::ArrowLeft) {
             movement -= 1.0;
         }
-        if keyboard_input.pressed(KeyCode::KeyD) {
+        if keyboard_input.pressed(KeyCode::ArrowRight) {
             movement += 1.0;
         }
         

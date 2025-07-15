@@ -6,7 +6,7 @@ pub struct TerrainPlugin;
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(TerrainMap::new(1024, 512))
+            .insert_resource(TerrainMap::new(2048, 1024)) // Much larger terrain
             .add_systems(Startup, setup_terrain)
             .add_systems(Update, update_terrain_mesh);
     }
@@ -25,12 +25,30 @@ impl TerrainMap {
     pub fn new(width: usize, height: usize) -> Self {
         let mut pixels = vec![false; width * height];
         
-        // Generate simple terrain - hills with some randomness
+        // Generate varied terrain with multiple layers of hills
         for x in 0..width {
-            let base_height = (height as f32 * 0.3) as usize;
-            let hill_height = ((x as f32 / width as f32 * std::f32::consts::PI * 3.0).sin() * 50.0) as i32;
-            let terrain_height = (base_height as i32 + hill_height).max(0) as usize;
+            let x_norm = x as f32 / width as f32;
             
+            // Base terrain level (bottom 40% of screen)
+            let base_height = (height as f32 * 0.4) as i32;
+            
+            // Large rolling hills
+            let large_hills = ((x_norm * std::f32::consts::PI * 2.0).sin() * 80.0) as i32;
+            
+            // Medium hills for variation
+            let medium_hills = ((x_norm * std::f32::consts::PI * 6.0).sin() * 40.0) as i32;
+            
+            // Small details
+            let small_hills = ((x_norm * std::f32::consts::PI * 20.0).sin() * 15.0) as i32;
+            
+            // Add some randomness
+            let random_offset = (fastrand::f32() * 20.0 - 10.0) as i32;
+            
+            let terrain_height = (base_height + large_hills + medium_hills + small_hills + random_offset)
+                .max(height as i32 / 10) // Minimum height
+                .min(height as i32 * 3 / 4) as usize; // Maximum height
+            
+            // Fill from bottom up to terrain height
             for y in 0..terrain_height.min(height) {
                 pixels[y * width + x] = true;
             }

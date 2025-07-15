@@ -30,9 +30,9 @@ impl Default for CameraController {
     fn default() -> Self {
         Self {
             follow_speed: 2.0,
-            zoom_speed: 0.1,
-            min_zoom: 0.3,
-            max_zoom: 2.0,
+            zoom_speed: 0.2,
+            min_zoom: 0.1,  // Allow zooming out much further
+            max_zoom: 3.0,  // Allow zooming in more
             manual_control: false,
             target_position: Vec3::ZERO,
         }

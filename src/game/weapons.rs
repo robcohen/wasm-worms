@@ -211,7 +211,8 @@ fn projectile_collision(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    terrain: Res<TerrainMap>,
+    mut terrain: ResMut<crate::game::terrain::TerrainMap>,
+    mut game_state: ResMut<crate::game::game_state::GameState>,
     mut projectile_query: Query<(Entity, &Transform, &mut Projectile, &Collider)>,
     time: Res<Time>,
 ) {
@@ -228,6 +229,8 @@ fn projectile_collision(
                     &mut commands,
                     &mut meshes,
                     &mut materials,
+                    &mut terrain,
+                    &mut game_state,
                     entity,
                     transform.translation,
                     &projectile,
@@ -245,6 +248,8 @@ fn projectile_collision(
                 &mut commands,
                 &mut meshes,
                 &mut materials,
+                &mut terrain,
+                &mut game_state,
                 entity,
                 transform.translation,
                 &projectile,
@@ -257,12 +262,22 @@ fn explode_projectile(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
+    terrain: &mut ResMut<crate::game::terrain::TerrainMap>,
+    game_state: &mut ResMut<crate::game::game_state::GameState>,
     projectile_entity: Entity,
     position: Vec3,
     projectile: &Projectile,
 ) {
     // Remove projectile
     commands.entity(projectile_entity).despawn();
+    
+    // Destroy terrain in explosion radius
+    let world_x = position.x + (terrain.width as f32 / 2.0);
+    let world_y = position.y + (terrain.height as f32 / 2.0);
+    terrain.destroy_circle(world_x, world_y, projectile.explosion_radius);
+    
+    // Update game state
+    game_state.explosion_started();
     
     // Create explosion effect
     commands.spawn((
@@ -280,7 +295,7 @@ fn explode_projectile(
 fn explosion_system(
     mut commands: Commands,
     time: Res<Time>,
-    mut terrain: ResMut<TerrainMap>,
+    mut game_state: ResMut<crate::game::game_state::GameState>,
     mut explosion_query: Query<(Entity, &Transform, &mut Explosion)>,
     mut worm_query: Query<(&Transform, &mut Worm), Without<Explosion>>,
 ) {
@@ -288,11 +303,6 @@ fn explosion_system(
         explosion.lifetime.tick(time.delta());
         
         if explosion.lifetime.just_finished() {
-            // Destroy terrain
-            let world_x = transform.translation.x + (terrain.width as f32 / 2.0);
-            let world_y = transform.translation.y + (terrain.height as f32 / 2.0);
-            terrain.destroy_circle(world_x, world_y, explosion.radius);
-            
             // Damage worms in explosion radius
             for (worm_transform, mut worm) in worm_query.iter_mut() {
                 let distance = transform.translation.distance(worm_transform.translation);
@@ -303,6 +313,9 @@ fn explosion_system(
                     worm.health = worm.health.max(0.0);
                 }
             }
+            
+            // End turn after explosion
+            game_state.end_turn();
             
             // Remove explosion effect
             commands.entity(entity).despawn();

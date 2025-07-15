@@ -53,11 +53,25 @@ pub struct PowerBar;
 fn handle_aiming_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut aiming_state: ResMut<AimingState>,
-    game_state: Res<GameState>,
+    mut game_state: ResMut<GameState>,
     time: Res<Time>,
 ) {
-    if game_state.game_phase != GamePhase::PlayerTurn {
+    // Only allow aiming during player's turn
+    if !game_state.can_player_act() {
         return;
+    }
+    
+    // Toggle aiming mode
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        if !aiming_state.is_aiming {
+            aiming_state.is_aiming = true;
+            game_state.start_aiming();
+        } else {
+            aiming_state.is_aiming = false;
+            aiming_state.power = 0.0;
+            aiming_state.power_charging = false;
+            game_state.start_new_turn(); // Return to turn mode
+        }
     }
     
     // Toggle aiming mode
@@ -133,11 +147,11 @@ fn handle_firing(
     mut materials: ResMut<Assets<ColorMaterial>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut aiming_state: ResMut<AimingState>,
+    mut game_state: ResMut<GameState>,
     weapon_inventory: Res<WeaponInventory>,
-    game_state: Res<GameState>,
     worm_query: Query<&Transform, (With<Worm>, With<PlayerControlled>)>,
 ) {
-    if game_state.game_phase != GamePhase::PlayerTurn || !aiming_state.is_aiming {
+    if !matches!(game_state.game_phase, GamePhase::Aiming) || !aiming_state.is_aiming {
         return;
     }
     
@@ -165,6 +179,10 @@ fn handle_firing(
                     direction,
                     aiming_state.power,
                 );
+                
+                // Update game state
+                game_state.start_firing();
+                game_state.projectile_launched();
                 
                 // Reset aiming state
                 aiming_state.is_aiming = false;

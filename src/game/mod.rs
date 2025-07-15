@@ -35,5 +35,12 @@ impl Plugin for GamePlugin {
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn(Camera2d);
+    commands.spawn((
+        Camera2d,
+        Transform::from_translation(Vec3::new(0.0, 200.0, 0.0)),
+        Projection::Orthographic(OrthographicProjection {
+            scale: 0.5, // Start zoomed out to see more terrain
+            ..default()
+        }),
+    ));
 }

@@ -32,7 +32,7 @@ pub fn run() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "WASM Worms".into(),
-                resolution: (1024.0, 768.0).into(),
+                resolution: (1600.0, 1200.0).into(),
                 ..default()
             }),
             ..default()
