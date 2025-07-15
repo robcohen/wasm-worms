@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::game::worm::{Worm, PlayerControlled};
+use crate::game::worm::Worm;
 use crate::game::game_state::GameState;
 
 pub struct CameraPlugin;
@@ -41,7 +41,7 @@ impl Default for CameraController {
 
 fn camera_follow_active_worm(
     mut camera_controller: ResMut<CameraController>,
-    game_state: Res<GameState>,
+    _game_state: Res<GameState>,
     worm_query: Query<&Transform, (With<Worm>, Without<Camera>)>,
 ) {
     if camera_controller.manual_control {
@@ -114,7 +114,7 @@ fn camera_manual_controls(
 
 fn camera_zoom_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut camera_controller: ResMut<CameraController>,
+    camera_controller: ResMut<CameraController>,
     mut camera_query: Query<&mut Projection, With<Camera>>,
     time: Res<Time>,
 ) {

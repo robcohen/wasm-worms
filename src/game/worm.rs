@@ -162,7 +162,7 @@ fn update_worm_health_display(
     }
     
     // Create new health bars for living worms
-    for (worm_entity, transform, worm) in worm_query.iter() {
+    for (_worm_entity, transform, worm) in worm_query.iter() {
         if worm.health <= 0.0 {
             continue;
         }
@@ -233,9 +233,6 @@ fn worm_fall_damage(
             let fall_damage = (body.velocity.y.abs() - 300.0) * 0.1;
             worm.health -= fall_damage;
             worm.health = worm.health.max(0.0);
-        }
-    }
-}            }
         }
     }
 }

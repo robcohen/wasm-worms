@@ -174,6 +174,7 @@ pub struct PlayerIndicator;
 fn update_active_player_indicator(
     mut commands: Commands,
     game_state: Res<GameState>,
+    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     indicator_query: Query<Entity, With<PlayerIndicator>>,
     worm_query: Query<(&Transform, &Worm)>,

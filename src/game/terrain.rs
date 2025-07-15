@@ -137,7 +137,7 @@ fn update_terrain_mesh(
         // Regenerate mesh
         let new_mesh = create_terrain_mesh(&terrain);
         
-        for mut mesh2d in query.iter_mut() {
+        for mesh2d in query.iter_mut() {
             if let Some(mesh) = meshes.get_mut(&mesh2d.0) {
                 *mesh = new_mesh.clone();
             }

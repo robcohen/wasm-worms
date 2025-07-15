@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::game::weapons::{WeaponInventory, WeaponType, WindSystem, fire_weapon};
+use crate::game::weapons::{WeaponInventory, WindSystem, fire_weapon};
 use crate::game::worm::{Worm, PlayerControlled};
 use crate::game::game_state::{GameState, GamePhase};
 
