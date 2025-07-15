@@ -57,7 +57,7 @@ fn apply_gravity(
     mut query: Query<&mut RigidBody, With<Collider>>,
 ) {
     for mut body in query.iter_mut() {
-        body.velocity.y += GRAVITY * body.gravity_scale * time.delta_seconds();
+        body.velocity.y += GRAVITY * body.gravity_scale * time.delta_secs();
     }
 }
 
@@ -66,11 +66,11 @@ fn apply_velocity(
     mut query: Query<(&mut Transform, &mut RigidBody)>,
 ) {
     for (mut transform, mut body) in query.iter_mut() {
-        transform.translation.x += body.velocity.x * time.delta_seconds();
-        transform.translation.y += body.velocity.y * time.delta_seconds();
+        transform.translation.x += body.velocity.x * time.delta_secs();
+        transform.translation.y += body.velocity.y * time.delta_secs();
         
         // Apply friction to horizontal movement
-        body.velocity.x *= body.friction.powf(time.delta_seconds());
+        body.velocity.x *= body.friction.powf(time.delta_secs());
     }
 }
 

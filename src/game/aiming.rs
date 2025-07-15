@@ -74,10 +74,10 @@ fn handle_aiming_input(
     
     // Adjust aim angle
     if keyboard_input.pressed(KeyCode::ArrowLeft) {
-        aiming_state.aim_angle += 90.0 * time.delta_seconds();
+        aiming_state.aim_angle += 90.0 * time.delta_secs();
     }
     if keyboard_input.pressed(KeyCode::ArrowRight) {
-        aiming_state.aim_angle -= 90.0 * time.delta_seconds();
+        aiming_state.aim_angle -= 90.0 * time.delta_secs();
     }
     
     // Clamp angle to reasonable range
@@ -90,7 +90,7 @@ fn handle_aiming_input(
     }
     
     if aiming_state.power_charging {
-        aiming_state.power += time.delta_seconds() * 0.8; // Charge speed
+        aiming_state.power += time.delta_secs() * 0.8; // Charge speed
         if aiming_state.power >= aiming_state.max_power {
             aiming_state.power = aiming_state.max_power;
         }
@@ -247,12 +247,10 @@ fn update_trajectory_preview(
     for (i, point) in trajectory_points.iter().enumerate() {
         if i % 3 == 0 { // Show every 3rd point to avoid clutter
         commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: meshes.add(bevy::math::primitives::Circle::new(2.0)).into(),
-                material: materials.add(ColorMaterial::from(Color::srgba(1.0, 1.0, 1.0, 0.6))),
-                transform: Transform::from_translation(Vec3::new(point.x, point.y, 0.5)),
-                ..default()
-            },                TrajectoryPreview,
+            Mesh2d(meshes.add(bevy::math::primitives::Circle::new(2.0))),
+            MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgba(1.0, 1.0, 1.0, 0.6)))),
+            Transform::from_translation(Vec3::new(point.x, point.y, 0.5)),
+            TrajectoryPreview,
             ));
         }
     }
@@ -265,12 +263,9 @@ fn update_trajectory_preview(
     );
     
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(bevy::math::primitives::Circle::new(8.0)).into(),
-            material: materials.add(ColorMaterial::from(current_weapon.get_color())),
-            transform: Transform::from_translation(crosshair_pos),
-            ..default()
-        },
+        Mesh2d(meshes.add(bevy::math::primitives::Circle::new(8.0))),
+        MeshMaterial2d(materials.add(ColorMaterial::from(current_weapon.get_color()))),
+        Transform::from_translation(crosshair_pos),
         AimingCrosshair,
     ));
     
@@ -280,12 +275,9 @@ fn update_trajectory_preview(
     
     // Power bar background
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(bevy::math::primitives::Rectangle::new(100.0, 10.0)).into(),
-            material: materials.add(ColorMaterial::from(Color::srgba(0.3, 0.3, 0.3, 0.8))),
-            transform: Transform::from_translation(power_pos),
-            ..default()
-        },
+        Mesh2d(meshes.add(bevy::math::primitives::Rectangle::new(100.0, 10.0))),
+        MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgba(0.3, 0.3, 0.3, 0.8)))),
+        Transform::from_translation(power_pos),
         PowerBar,
     ));
     
@@ -300,12 +292,9 @@ fn update_trajectory_preview(
         };
         
         commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: meshes.add(bevy::math::primitives::Rectangle::new(power_width, 8.0)).into(),
-                material: materials.add(ColorMaterial::from(fill_color)),
-                transform: Transform::from_translation(power_pos + Vec3::new((power_width - 100.0) / 2.0, 0.0, 0.1)),
-                ..default()
-            },
+            Mesh2d(meshes.add(bevy::math::primitives::Rectangle::new(power_width, 8.0))),
+            MeshMaterial2d(materials.add(ColorMaterial::from(fill_color))),
+            Transform::from_translation(power_pos + Vec3::new((power_width - 100.0) / 2.0, 0.0, 0.1)),
             PowerBar,
         ));
     }

@@ -170,12 +170,9 @@ pub fn fire_weapon(
         let fuse_timer = stats.fuse_time.map(|time| Timer::from_seconds(time, TimerMode::Once));
         
         commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: meshes.add(bevy::math::primitives::Circle::new(4.0)).into(),
-                material: materials.add(ColorMaterial::from(weapon_type.get_color())),
-                transform: Transform::from_translation(position),
-                ..default()
-            },
+            Mesh2d(meshes.add(bevy::math::primitives::Circle::new(4.0))),
+            MeshMaterial2d(materials.add(ColorMaterial::from(weapon_type.get_color()))),
+            Transform::from_translation(position),
             Projectile {
                 weapon_type: weapon_type.clone(),
                 damage: stats.damage,
@@ -206,7 +203,7 @@ fn projectile_movement(
 ) {
     for (mut body, projectile) in query.iter_mut() {
         // Apply wind force
-        body.velocity += wind.force * projectile.wind_resistance * time.delta_seconds();
+        body.velocity += wind.force * projectile.wind_resistance * time.delta_secs();
     }
 }
 
@@ -269,12 +266,9 @@ fn explode_projectile(
     
     // Create explosion effect
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(bevy::math::primitives::Circle::new(projectile.explosion_radius)).into(),
-            material: materials.add(ColorMaterial::from(Color::srgba(1.0, 0.5, 0.0, 0.6))),
-            transform: Transform::from_translation(position),
-            ..default()
-        },
+        Mesh2d(meshes.add(bevy::math::primitives::Circle::new(projectile.explosion_radius))),
+        MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgba(1.0, 0.5, 0.0, 0.6)))),
+        Transform::from_translation(position),
         Explosion {
             radius: projectile.explosion_radius,
             damage: projectile.damage,

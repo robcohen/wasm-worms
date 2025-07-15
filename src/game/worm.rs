@@ -55,12 +55,9 @@ fn spawn_worms(
 ) {
     // Spawn player worm
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(bevy::math::primitives::Circle::new(16.0)).into(),
-            material: materials.add(ColorMaterial::from(Color::srgb(0.2, 0.8, 0.2))),
-            transform: Transform::from_translation(Vec3::new(-200.0, 100.0, 1.0)),
-            ..default()
-        },
+        Mesh2d(meshes.add(bevy::math::primitives::Circle::new(16.0))),
+        MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(0.2, 0.8, 0.2)))),
+        Transform::from_translation(Vec3::new(-200.0, 100.0, 1.0)),
         Worm {
             team: 0,
             ..default()
@@ -72,12 +69,9 @@ fn spawn_worms(
     
     // Spawn enemy worm
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(bevy::math::primitives::Circle::new(16.0)).into(),
-            material: materials.add(ColorMaterial::from(Color::srgb(0.8, 0.2, 0.2))),
-            transform: Transform::from_translation(Vec3::new(200.0, 100.0, 1.0)),
-            ..default()
-        },
+        Mesh2d(meshes.add(bevy::math::primitives::Circle::new(16.0))),
+        MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(0.8, 0.2, 0.2)))),
+        Transform::from_translation(Vec3::new(200.0, 100.0, 1.0)),
         Worm {
             team: 1,
             ..default()
@@ -179,14 +173,11 @@ fn update_worm_health_display(
         
         // Health bar background
         commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: meshes.add(bevy::math::primitives::Rectangle::new(bar_width, bar_height)).into(),
-                material: materials.add(ColorMaterial::from(Color::srgba(0.3, 0.3, 0.3, 0.8))),
-                transform: Transform::from_translation(
-                    transform.translation + Vec3::new(0.0, 25.0, 0.2)
-                ),
-                ..default()
-            },
+            Mesh2d(meshes.add(bevy::math::primitives::Rectangle::new(bar_width, bar_height))),
+            MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgba(0.3, 0.3, 0.3, 0.8)))),
+            Transform::from_translation(
+                transform.translation + Vec3::new(0.0, 25.0, 0.2)
+            ),
             HealthBar,
         ));
         
@@ -202,14 +193,11 @@ fn update_worm_health_display(
             };
             
             commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: meshes.add(bevy::math::primitives::Rectangle::new(fill_width, bar_height - 2.0)).into(),
-                    material: materials.add(ColorMaterial::from(health_color)),
-                    transform: Transform::from_translation(
-                        transform.translation + Vec3::new((fill_width - bar_width) / 2.0, 25.0, 0.3)
-                    ),
-                    ..default()
-                },
+                Mesh2d(meshes.add(bevy::math::primitives::Rectangle::new(fill_width, bar_height - 2.0))),
+                MeshMaterial2d(materials.add(ColorMaterial::from(health_color))),
+                Transform::from_translation(
+                    transform.translation + Vec3::new((fill_width - bar_width) / 2.0, 25.0, 0.3)
+                ),
                 HealthBar,
             ));
         }
@@ -219,15 +207,15 @@ fn update_worm_health_display(
 fn handle_worm_death(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut worm_query: Query<(Entity, &mut Handle<ColorMaterial>, &Worm), (Without<DeadWorm>, Changed<Worm>)>,
+    mut worm_query: Query<(Entity, &mut MeshMaterial2d<ColorMaterial>, &Worm), (Without<DeadWorm>, Changed<Worm>)>,
 ) {
-    for (entity, mut material_handle, worm) in worm_query.iter_mut() {
+    for (entity, mut material, worm) in worm_query.iter_mut() {
         if worm.health <= 0.0 {
             // Mark worm as dead
             commands.entity(entity).insert(DeadWorm);
             
             // Change worm color to indicate death
-            *material_handle = materials.add(ColorMaterial::from(Color::srgba(0.5, 0.5, 0.5, 0.7)));
+            material.0 = materials.add(ColorMaterial::from(Color::srgba(0.5, 0.5, 0.5, 0.7)));
             
             // Remove physics components to make it static
             commands.entity(entity).remove::<RigidBody>();

@@ -115,16 +115,13 @@ fn setup_terrain(
     let mesh = create_terrain_mesh(&terrain);
     
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(mesh).into(),
-            material: materials.add(ColorMaterial::from(Color::srgb(0.4, 0.3, 0.2))),
-            transform: Transform::from_translation(Vec3::new(
-                -(terrain.width as f32) / 2.0,
-                -(terrain.height as f32) / 2.0,
-                0.0,
-            )),
-            ..default()
-        },
+        Mesh2d(meshes.add(mesh)),
+        MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(0.4, 0.3, 0.2)))),
+        Transform::from_translation(Vec3::new(
+            -(terrain.width as f32) / 2.0,
+            -(terrain.height as f32) / 2.0,
+            0.0,
+        )),
         TerrainRenderer,
     ));
 }
@@ -132,7 +129,7 @@ fn setup_terrain(
 fn update_terrain_mesh(
     mut meshes: ResMut<Assets<Mesh>>,
     mut terrain: ResMut<TerrainMap>,
-    mut query: Query<&Handle<Mesh>, With<TerrainRenderer>>,
+    mut query: Query<&mut Mesh2d, With<TerrainRenderer>>,
 ) {
     if !terrain.dirty_chunks.is_empty() {
         terrain.dirty_chunks.clear();
@@ -140,8 +137,8 @@ fn update_terrain_mesh(
         // Regenerate mesh
         let new_mesh = create_terrain_mesh(&terrain);
         
-        for mesh_handle in query.iter_mut() {
-            if let Some(mesh) = meshes.get_mut(mesh_handle) {
+        for mut mesh2d in query.iter_mut() {
+            if let Some(mesh) = meshes.get_mut(&mesh2d.0) {
                 *mesh = new_mesh.clone();
             }
         }

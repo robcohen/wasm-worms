@@ -68,19 +68,19 @@ fn camera_manual_controls(
     
     // Check for manual camera movement
     if keyboard_input.pressed(KeyCode::KeyW) {
-        manual_movement.y += move_speed * time.delta_seconds();
+        manual_movement.y += move_speed * time.delta_secs();
         camera_controller.manual_control = true;
     }
     if keyboard_input.pressed(KeyCode::KeyS) {
-        manual_movement.y -= move_speed * time.delta_seconds();
+        manual_movement.y -= move_speed * time.delta_secs();
         camera_controller.manual_control = true;
     }
     if keyboard_input.pressed(KeyCode::KeyA) {
-        manual_movement.x -= move_speed * time.delta_seconds();
+        manual_movement.x -= move_speed * time.delta_secs();
         camera_controller.manual_control = true;
     }
     if keyboard_input.pressed(KeyCode::KeyD) {
-        manual_movement.x += move_speed * time.delta_seconds();
+        manual_movement.x += move_speed * time.delta_secs();
         camera_controller.manual_control = true;
     }
     
@@ -105,7 +105,7 @@ fn camera_manual_controls(
             let distance = target - current;
             
             if distance.length() > 10.0 {
-                let movement = distance * camera_controller.follow_speed * time.delta_seconds();
+                let movement = distance * camera_controller.follow_speed * time.delta_secs();
                 transform.translation += movement;
             }
         }
@@ -115,25 +115,27 @@ fn camera_manual_controls(
 fn camera_zoom_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut camera_controller: ResMut<CameraController>,
-    mut camera_query: Query<&mut OrthographicProjection, With<Camera>>,
+    mut camera_query: Query<&mut Projection, With<Camera>>,
     time: Res<Time>,
 ) {
     let mut zoom_delta = 0.0;
     
     if keyboard_input.pressed(KeyCode::Equal) || keyboard_input.pressed(KeyCode::NumpadAdd) {
-        zoom_delta -= camera_controller.zoom_speed * time.delta_seconds();
+        zoom_delta -= camera_controller.zoom_speed * time.delta_secs();
     }
     if keyboard_input.pressed(KeyCode::Minus) || keyboard_input.pressed(KeyCode::NumpadSubtract) {
-        zoom_delta += camera_controller.zoom_speed * time.delta_seconds();
+        zoom_delta += camera_controller.zoom_speed * time.delta_secs();
     }
     
     if zoom_delta != 0.0 {
         for mut projection in camera_query.iter_mut() {
-            projection.scale += zoom_delta;
-            projection.scale = projection.scale.clamp(
-                camera_controller.min_zoom,
-                camera_controller.max_zoom
-            );
+            if let Projection::Orthographic(ref mut ortho) = projection.as_mut() {
+                ortho.scale += zoom_delta;
+                ortho.scale = ortho.scale.clamp(
+                    camera_controller.min_zoom,
+                    camera_controller.max_zoom
+                );
+            }
         }
     }
 }

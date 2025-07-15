@@ -143,7 +143,7 @@ fn update_turn_timer(
     game_state: Res<GameState>,
 ) {
     if timer.is_active && game_state.game_phase == GamePhase::PlayerTurn {
-        timer.current_time -= time.delta_seconds();
+        timer.current_time -= time.delta_secs();
         timer.current_time = timer.current_time.max(0.0);
     }
 }
@@ -189,14 +189,11 @@ fn update_active_player_indicator(
             if worm.team == game_state.current_player && worm.health > 0.0 {
                 // Spawn indicator above worm
                 commands.spawn((
-                    MaterialMesh2dBundle {
-                        mesh: bevy::prelude::Handle::default(), // Will be set by Bevy
-                        material: materials.add(ColorMaterial::from(current_team.color)),
-                        transform: Transform::from_translation(
-                            transform.translation + Vec3::new(0.0, 30.0, 0.1)
-                        ),
-                        ..default()
-                    },
+                    Mesh2d(meshes.add(bevy::math::primitives::Circle::new(6.0))),
+                    MeshMaterial2d(materials.add(ColorMaterial::from(current_team.color))),
+                    Transform::from_translation(
+                        transform.translation + Vec3::new(0.0, 30.0, 0.1)
+                    ),
                     PlayerIndicator,
                 ));
                 break;
