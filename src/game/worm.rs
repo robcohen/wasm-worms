@@ -145,6 +145,10 @@ fn worm_terrain_collision(
                             transform.translation.x = test_x - (terrain.width as f32 / 2.0);
                             body.velocity.x = 0.0;
                             break;
+                        }
+                    }
+                }
+            }
         }
     }
 }
